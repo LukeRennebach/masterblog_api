@@ -1,3 +1,5 @@
+"""Flask backend for the Blog API providing GET and POST endpoints for blog posts."""
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
@@ -12,16 +14,29 @@ POSTS = [
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
+    """Handle GET requests to retrieve all blog posts.
+
+    Returns:
+        Response: JSON list of all blog posts.
+    """
     return jsonify(POSTS)
 
 
 # Neue Route für POST /api/posts
 @app.route('/api/posts', methods=['POST'])
 def create_post():
+    """Handle POST requests to create a new blog post.
+
+    Expects JSON with 'title' and 'content' fields.
+
+    Returns:
+        Response: JSON of the created post with status 201 on success,
+                  or error message with status 400 if data is missing.
+    """
     data = request.get_json()
     if not data or 'title' not in data or 'content' not in data:
         return jsonify({'error': 'Missing title or content'}), 400
-    # Neue ID generieren
+    # new ID gen
     if POSTS:
         new_id = max(post['id'] for post in POSTS) + 1
     else:
