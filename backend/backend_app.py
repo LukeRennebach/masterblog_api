@@ -1,4 +1,4 @@
-"""Flask backend for the Blog API providing GET and POST endpoints for blog posts."""
+"""Flask backend for the Blog API providing GET, POST, PUT, DELETE, and SEARCH endpoints for blog posts."""
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -34,8 +34,9 @@ def create_post():
                   or error message with status 400 if data is missing.
     """
     data = request.get_json()
-    if not data or 'title' not in data or 'content' not in data:
-        return jsonify({'error': 'Missing title or content'}), 400
+    missing = [field for field in ('title', 'content') if not data or field not in data]
+    if missing:
+        return jsonify({'error': f"Missing fields: {missing}"}), 400
     # new ID gen
     if POSTS:
         new_id = max(post['id'] for post in POSTS) + 1
@@ -91,6 +92,29 @@ def update_post(post_id):
         post['content'] = data['content']
     return jsonify(post), 200
 
+
+@app.route('/api/posts/search', methods=['GET'])
+def search_posts():
+    """Search for blog posts by title or content substring (case-insensitive).
+
+    Query Parameters:
+        title (str, optional): Substring to search for in the post titles.
+        content (str, optional): Substring to search for in the post contents.
+
+    Returns:
+        Response: JSON list of matching blog posts with status 200.
+    """
+    title_query = request.args.get('title', '').lower()
+    content_query = request.args.get('content', '').lower()
+    if not title_query and not content_query:
+        result = POSTS
+    else:
+        result = [
+            post for post in POSTS
+            if (title_query and title_query in post['title'].lower()) or
+               (content_query and content_query in post['content'].lower())
+        ]
+    return jsonify(result), 200
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)
